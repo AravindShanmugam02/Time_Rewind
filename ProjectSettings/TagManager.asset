@@ -4,8 +4,9 @@
 TagManager:
   serializedVersion: 3
   tags:
-  - ControlableObject00
-  - ControlableObject01
+  - ControllableObjectsContainer
+  - ControllableObject00
+  - ControllableObject01
   layers:
   - Default
   - TransparentFX

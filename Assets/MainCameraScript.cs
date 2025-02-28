@@ -42,7 +42,7 @@ public class MainCamera : MonoBehaviour, IControl
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        ObjectControl.SubscribeToIControl(this);
+        ObjectController.SubscribeToIControl(this);
 
         _currentPosition = transform.position;
         _newPosition = transform.position;
@@ -75,6 +75,7 @@ public class MainCamera : MonoBehaviour, IControl
 
     void PushInfoToICameraSubscribers()
     {
+        // Inform the subscribers about the object to which the camera is current assigned to.
         foreach(var i in iCameraSubscribersList)
         {
             i.ICameraUpdate(cameraAssignedObjectTag);
