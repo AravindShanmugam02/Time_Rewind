@@ -16,43 +16,43 @@ public class TimeKeeper : MonoBehaviour
     // List for holding Frames
     List<FrameInfo> listOfFramesInfo;
 
-    void SetToObjInfo(ControllableObjectInfo objInfo, Transform childObjTrans, Rigidbody childObjRigBody, ObjectController childObjCont)
+    void SetToObjInfo(ControllableObjectInfo _objInfo, Transform _childObjTrans, Rigidbody _childObjRigBody, ObjectController _childObjCont)
     {
-        objInfo.posX = childObjTrans.position.x;
-        objInfo.posY = childObjTrans.position.y;
-        objInfo.posZ = childObjTrans.position.z;
+        _objInfo.posX = _childObjTrans.position.x;
+        _objInfo.posY = _childObjTrans.position.y;
+        _objInfo.posZ = _childObjTrans.position.z;
 
-        objInfo.rotX = childObjTrans.rotation.x;
-        objInfo.rotY = childObjTrans.rotation.y;
-        objInfo.rotZ = childObjTrans.rotation.z;
+        _objInfo.rotX = _childObjTrans.rotation.x;
+        _objInfo.rotY = _childObjTrans.rotation.y;
+        _objInfo.rotZ = _childObjTrans.rotation.z;
 
-        objInfo.sclX = childObjTrans.localScale.x;
-        objInfo.sclY = childObjTrans.localScale.y;
-        objInfo.sclZ = childObjTrans.localScale.z;
+        _objInfo.sclX = _childObjTrans.localScale.x;
+        _objInfo.sclY = _childObjTrans.localScale.y;
+        _objInfo.sclZ = _childObjTrans.localScale.z;
 
-        objInfo.objTag = childObjTrans.tag;
+        _objInfo.objTag = _childObjTrans.tag;
 
-        objInfo.linearVelocity = childObjRigBody.linearVelocity;
-        objInfo.angularVelocity = childObjRigBody.angularVelocity;
+        _objInfo.linearVelocity = _childObjRigBody.linearVelocity;
+        _objInfo.angularVelocity = _childObjRigBody.angularVelocity;
 
-        objInfo.isMoving = childObjCont.GetIsObjectMovingValue();
-        objInfo.isCameraAssigned = childObjCont.GetIsCameraAssignedValue();
+        _objInfo.isMoving = _childObjCont.GetIsObjectMovingValue();
+        _objInfo.isCameraAssigned = _childObjCont.GetIsCameraAssignedValue();
     }
 
-    void SetFromObjInfo(ControllableObjectInfo objInfo, Transform childObjTrans, Rigidbody childObjRigBody, ObjectController childObjCont)
+    void SetFromObjInfo(ControllableObjectInfo _objInfo, Transform _childObjTrans, Rigidbody _childObjRigBody, ObjectController _childObjCont)
     {
-        childObjTrans.position = new Vector3(objInfo.posX, objInfo.posY, objInfo.posZ);
-        childObjTrans.rotation = Quaternion.Euler(objInfo.rotX, objInfo.rotY, objInfo.rotZ);
-        childObjTrans.localScale = new Vector3(objInfo.sclX, objInfo.sclY, objInfo.sclZ);
+        _childObjTrans.position = new Vector3(_objInfo.posX, _objInfo.posY, _objInfo.posZ);
+        _childObjTrans.rotation = Quaternion.Euler(_objInfo.rotX, _objInfo.rotY, _objInfo.rotZ);
+        _childObjTrans.localScale = new Vector3(_objInfo.sclX, _objInfo.sclY, _objInfo.sclZ);
 
-        childObjRigBody.linearVelocity = objInfo.linearVelocity;
-        childObjRigBody.angularVelocity = objInfo.angularVelocity;
+        _childObjRigBody.linearVelocity = _objInfo.linearVelocity;
+        _childObjRigBody.angularVelocity = _objInfo.angularVelocity;
 
         // We don't set tag, as we would be using tag to check whether the values are being set to the right object.
 
         // Wouldn't need to set isMoving value as it doesn't matter when rewinding.
 
-        childObjCont.SetCameraAssignedValue(objInfo.isCameraAssigned);
+        _childObjCont.SetCameraAssignedValue(_objInfo.isCameraAssigned);
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -81,6 +81,10 @@ public class TimeKeeper : MonoBehaviour
     void Update()
     {
         // Input Handle
+        if(Input.GetKey(KeyCode.R)) // Rewind
+        {
+
+        }
     }
 
     // Frame Recorder

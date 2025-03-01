@@ -4,17 +4,23 @@ using UnityEngine;
 
 public class MainCamera : MonoBehaviour, IControl
 {
+    public enum CameraState
+    {
+        Object,
+        Global
+    }
+
     [Header("Objects")]
-    [SerializeField] private GameObject controllableObject00;
-    [SerializeField] private GameObject controllableObject01;
-    [SerializeField] private Dictionary<GameObject, string> dictionaryGameObjectWithTagHandle; // Removed type '<GameObject, TagHandle>' and used '<GameObject, string>' instead.
+    [SerializeField] private GameObject controllableObjectsContainer;
+    [SerializeField] private Dictionary<int, StringTagGameObject> intStringTagGameObjectDictionary; // For storing GameObject and its tag with some sort of index.
+    [SerializeField] private Dictionary<string, GameObject> gameObjectTagGameObjectDictionary;
     [SerializeField] private string cameraAssignedObjectTag; // Removed type 'TagHandle'.
 
     [Header("MainCamera")]
-    [SerializeField] private Vector3 _currentPosition, _newPosition, _targetPosition, _currentRotation;
-    [SerializeField] private float _cameraMovementSmoothness = 0.5f;
+    [SerializeField] private Vector3 currentPosition, newPosition, targetPosition, currentRotation;
+    [SerializeField] private float cameraMovementSmoothness = 5.0f;
     private Vector3 offSetForCameraPos, offSetForCameraRot;
-    private Transform _myTransform;
+    private Transform myTransform;
 
     [Header("ICamera")]
     [SerializeField] private static List<ICamera> iCameraSubscribersList;
@@ -23,54 +29,91 @@ public class MainCamera : MonoBehaviour, IControl
 
     void Awake()
     {
-        _myTransform = GetComponent<Transform>();
-
-        // Initialising lists and dictionaries
+        // Get transform
+        myTransform = GetComponent<Transform>();
+        
+        // Initialising lists
         iCameraSubscribersList = new List<ICamera>();
-        dictionaryGameObjectWithTagHandle = new Dictionary<GameObject, string>();
-        dictionaryGameObjectWithTagHandle.Add(controllableObject00, controllableObject00.transform.tag); // Assigning GameObjects and their 'string tag' in Dictionary
-        dictionaryGameObjectWithTagHandle.Add(controllableObject01, controllableObject01.transform.tag);
+        
+        // Initialising dictionaries
+        intStringTagGameObjectDictionary = new Dictionary<int, StringTagGameObject>();
+        gameObjectTagGameObjectDictionary = new Dictionary<string, GameObject>();
 
-        // By Default, assigning MainCamera to object 00.
-        cameraAssignedObjectTag = dictionaryGameObjectWithTagHandle[controllableObject00];
-
-        // Assigning value
-        offSetForCameraPos = new Vector3(0f, 7f, -10);
+        // Assigning value for variables
+        offSetForCameraPos = new Vector3(0f, 7f, -10); // Hard value just got by trail & error in the editor.
         offSetForCameraRot = new Vector3(25f, 0f, 0f);
+        currentPosition = transform.position;
+        newPosition = transform.position;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        ObjectController.SubscribeToIControl(this);
+        // Finding Controllable Objects Container
+        controllableObjectsContainer = GameObject.FindGameObjectWithTag("ControllableObjectsContainer");
+        if (controllableObjectsContainer == null)
+        {
+            Debug.LogError("GameObject Not Found! - ControllableObjectsContainer");
+        }
+        // Storing controllable objects into dictionary
+        for(int i = 0; i < controllableObjectsContainer.transform.childCount; i++)
+        {
+            StringTagGameObject stgo = new StringTagGameObject();
+            stgo.stgoKey = controllableObjectsContainer.transform.GetChild(i).tag;
+            stgo.stgoValue = controllableObjectsContainer.transform.GetChild(i).gameObject;
+            intStringTagGameObjectDictionary.Add(i, stgo);
+            gameObjectTagGameObjectDictionary.Add(stgo.stgoKey, stgo.stgoValue);
+        }
 
-        _currentPosition = transform.position;
-        _newPosition = transform.position;
+        // By Default, assigning MainCamera to object 0.
+        // Dictionary[i] --> Gives the Value of the Key, that is, 'i' in the dictionary.
+        // Hence, Dictionary[i].stgoKey is actually Dictionary Value of Key ['i'].stgoKey --> which is the 'string' in the StringTagGameObject struct.
+        cameraAssignedObjectTag = intStringTagGameObjectDictionary[0].stgoKey;
+
+        ObjectController.SubscribeToIControl(this);
     }
 
     // Update is called once per frame
     void Update()
     {
+        CameraInput();
         CameraUpdate();
         PushInfoToICameraSubscribers();
     }
 
-    void CameraUpdate()
+    void CameraInput()
     {
-        foreach (KeyValuePair<GameObject, string> pair in dictionaryGameObjectWithTagHandle)
+#if UNITY_ANDROID || UNITY_IOS
+#else
+        if(Input.GetKeyDown(KeyCode.I)) // Switch Camera
         {
-            if (cameraAssignedObjectTag == pair.Value)
+            // If camera is assigned to the last ControllableObject in the list, It switches to Global.
+            if (cameraAssignedObjectTag == intStringTagGameObjectDictionary[(intStringTagGameObjectDictionary.Count)-1].stgoKey)
             {
-                _targetPosition = pair.Key.transform.GetChild(0).transform.position;
-                break;
+
             }
         }
+        
+#endif
+    }
 
-        _newPosition = _targetPosition + offSetForCameraPos;
-        _currentPosition = transform.position;
-        _currentRotation = transform.rotation.eulerAngles;
-        transform.position = Vector3.Lerp(_currentPosition, _newPosition, 0.5f);
-        transform.rotation.SetLookRotation(Vector3.Lerp(_currentRotation, offSetForCameraRot, 0.5f));
+    // Updates Camera's position and assigns Camera to target.
+    void CameraUpdate()
+    {
+        // Having foreach loop to iterate over dictionary items with no properly indexed Key is not a good way of updating camera for every frame.
+        // Think what will happen if there are 100s of items in the dictionary. It is very inefficient. Hence, having a dictionary with gameObjectTag (which is a string) as KEY is good option.
+        // So that we can use 'Dictionary.ContainsKey'.
+        if(gameObjectTagGameObjectDictionary.ContainsKey(cameraAssignedObjectTag))
+        {
+            // Here we are getting the position of the child object (which is its 'Face' object) of the controllable object that is mapped to the tag that is equal to cameraAssignedObjectTag.
+            targetPosition = gameObjectTagGameObjectDictionary[cameraAssignedObjectTag].transform.GetChild(0).transform.position;
+        }
+
+        newPosition = targetPosition + offSetForCameraPos;
+        currentPosition = transform.position;
+        currentRotation = transform.rotation.eulerAngles;
+        transform.position = Vector3.Lerp(currentPosition, newPosition, 0.5f);
+        transform.rotation.SetLookRotation(Vector3.Lerp(currentRotation, offSetForCameraRot, cameraMovementSmoothness * Time.deltaTime));
     }
 
     void PushInfoToICameraSubscribers()
@@ -82,7 +125,7 @@ public class MainCamera : MonoBehaviour, IControl
         }
     }
 
-    public void IControlUpdate(bool isObjectMoving, string objectTag)
+    public void IControlUpdate(bool _isObjectMoving, string _objectTag)
     {
 
     }

@@ -26,5 +26,11 @@ public struct ControllableObjectInfo
 
 public struct FrameInfo
 {
-    List<ControllableObjectInfo> listOfControllableObjectsInfo;
+    public List<ControllableObjectInfo> ControllableObjectsInfoList;
+}
+
+public struct StringTagGameObject
+{
+    public string stgoKey;  // Removed type 'TagHandle' and used 'string' instead for game object tags.
+    public GameObject stgoValue;
 }

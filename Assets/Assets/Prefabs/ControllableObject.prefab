@@ -179,7 +179,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _movementSpeed: 5
-  _rotationSpeed: 0.5
+  _rotationSpeed: 5
   _rightLeftInput: 0
   _forwardBackwardInput: 0
   _movementDirectionInput: {x: 0, y: 0, z: 0}

@@ -4,21 +4,21 @@ using UnityEngine;
 public class ObjectController : MonoBehaviour, ICamera
 {
     [Header("Objects")]
-    [SerializeField] private float _movementSpeed = 5.0f, _rotationSpeed = 0.5f;
-    [SerializeField] private float _rightLeftInput, _forwardBackwardInput;
-    [SerializeField] private Vector3 _movementDirectionInput, _directionOfMovement, _movementVelocityOrMotion, _newRotation;
-    [SerializeField] private string _myTag; // Removed type 'TagHandle' and used 'string' instead.
+    [SerializeField] private float movementSpeed = 5.0f, rotationSpeed = 5.0f;
+    [SerializeField] private float rightLeftInput, forwardBackwardInput;
+    [SerializeField] private Vector3 movementDirectionInput, directionOfMovement, movementVelocityOrMotion, newRotation;
+    [SerializeField] private string myTag; // Removed type 'TagHandle' and used 'string' instead.
     [SerializeField] private bool isObjectMoving = false;
     public bool GetIsObjectMovingValue() { return isObjectMoving; } // Created this function, so that TimeKeeper can use it to access 'isObjectMoving' value on adhoc to set this value every frame.
-    private Transform _myTransform;
-    private Rigidbody _myRigidBody;
-    private CharacterController _myCharacterController;
+    private Transform myTransform;
+    private Rigidbody myRigidBody;
+    private CharacterController myCharacterController;
 
     [Header("MainCamera")]
-    [SerializeField] private bool _isCameraAssigned = false;                                                            //} --> Made these 3 as non-static.
-    public void SetCameraAssignedValue(bool isCameraAssigned) { _isCameraAssigned = isCameraAssigned; }                 //}     When declared as static, accessing the function to set the value actually accesses both the ControllableObject's
-    // TimeKeeper can use SetCameraAssignedValue(bool isCameraAssigned) on adhoc to set this value every frame.
-    public bool GetIsCameraAssignedValue() { return _isCameraAssigned; }                                                //}     function because of the same name and being 'public static'.
+    [SerializeField] private bool isCameraAssigned = false;                                                             //} --> Made these 3 as non-static.
+    public void SetCameraAssignedValue(bool _isCameraAssigned) { isCameraAssigned = _isCameraAssigned; }                //}     When declared as static, accessing the function to set the value actually accesses both the ControllableObject's
+    // TimeKeeper can use SetCameraAssignedValue(bool _isCameraAssigned) on adhoc to set this value every frame.
+    public bool GetIsCameraAssignedValue() { return isCameraAssigned; }                                                 //}     function because of the same name and being 'public static'.
     // TimeKeeper can use GetIsCameraAssignedValue() on adhoc to set this value every frame.
 
     [Header("IControl")]
@@ -33,17 +33,17 @@ public class ObjectController : MonoBehaviour, ICamera
         iControlSubscribersList = new List<IControl>();
 
         // Get components
-        _myTransform = GetComponent<Transform>();
-        _myRigidBody = GetComponent<Rigidbody>();
-        _myCharacterController = GetComponent<CharacterController>();
-        _myTag = _myTransform.tag;
+        myTransform = GetComponent<Transform>();
+        myRigidBody = GetComponent<Rigidbody>();
+        myCharacterController = GetComponent<CharacterController>();
+        myTag = myTransform.tag;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         MainCamera.SubscribeToICamera(this);
-        _myRigidBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        myRigidBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
     }
 
     // Update is called once per frame
@@ -56,7 +56,7 @@ public class ObjectController : MonoBehaviour, ICamera
     void MovementUpdate()
     {
         // Is only controled when camera is assigned to this object
-        if(_isCameraAssigned)
+        if(isCameraAssigned)
         {
 #if UNITY_ANDROID || UNITY_IOS
             // Movement input
@@ -64,39 +64,48 @@ public class ObjectController : MonoBehaviour, ICamera
             _upDownInput = CrossPlatformInputManager.GetAxis("Vertical");
 #else
             // Movement input
-            _rightLeftInput = Input.GetAxis("Horizontal");
-            _forwardBackwardInput = Input.GetAxis("Vertical");
+            rightLeftInput = Input.GetAxis("Horizontal");
+            forwardBackwardInput = Input.GetAxis("Vertical");
 #endif
 ////////////// Calculating Movement, Direction, Movement Velocity (or) Motion, and Applying it to the Character Controller //////////////
 
             // Movement direction using Vector3 Input
-            _movementDirectionInput = new Vector3(_rightLeftInput, 0.0f, _forwardBackwardInput);
+            movementDirectionInput = new Vector3(rightLeftInput, 0.0f, forwardBackwardInput);
             
             // Direction of Movement
-            _directionOfMovement = _movementDirectionInput.normalized;
+            directionOfMovement = movementDirectionInput.normalized;
 
             // Movement Speed
-            _movementVelocityOrMotion = _directionOfMovement * _movementSpeed;
+            movementVelocityOrMotion = directionOfMovement * movementSpeed;
 
-            // NOTE: Can also use pure physics to move the object by _myRigidBody.AddForce(_movementVelocityOrMotion);
+            // NOTE: Can also use pure physics to move the object by myRigidBody.AddForce(movementVelocityOrMotion);
             // (OR) by not using physics at all by transform.translate.
-            _myCharacterController.Move((_movementVelocityOrMotion) * Time.deltaTime);
+            myCharacterController.Move((movementVelocityOrMotion) * Time.deltaTime);
 
             // [TODO] Calculate Jump velocity in consideration with gravity.
         }
 
         // Calculating Rotation - Remember X and Z Rotation should be frozen.
         // Keeping this calculation outside of _isCameraAssigned because, the object shouldn't rotate unnecessarily when not moving or moving.
+        /*
+        NOTE: "The Object rotates on it's own when moving, even when no rotation or angular force is applied" - This bug is fixed now.
+        Fix - For every rigid object, Unity activates the Automatic Inertia Tensor which applies an Intertia Tensor of about V3(1,1,1)
+        to the object when it moves, especially when it moves in the -90 or 90 from it's Z axis. It is basically an angular inertia.
+        So, I have turned it off in the editor and set the Intertia Tensor to V3(0,0,0). Now, the rotation should be all good to calculate.
+        */
 
-        // NOTE: "The Object rotates on it's own when moving, even when no rotation or angular force is applied" - This bug is fixed now.
-        // Fix - For every rigid object, Unity activates the Automatic Inertia Tensor which applies an Intertia Tensor of about V3(1,1,1)
-        // to the object when it moves, especially when it moves in the -90 or 90 from it's Z axis. It is basically an angular inertia.
-        // So, I have turned it off in the editor and set the Intertia Tensor to V3(0,0,0). Now, the rotation should be all good to calculate.
-        // [TODO - Object rotation based on its movement direction]
+        if(directionOfMovement != Vector3.zero) // Keeping logic inside this if so that the object don't snap back to it's original default rotation when not moving.
+        {
+            newRotation = Quaternion.LookRotation(directionOfMovement, transform.up).eulerAngles; // Quaternion.LookRotation(Direction_to_look_in, direction_up);
+            // [TO FIX] A bug is found where - When object is facing forward, that is, Rotation Y is 0 and asked to turn left, rather than just turning left from straight,
+            // it turns right, back and then reaches left direction.
+            // When noticed what is the reason, I could see that the newRotation value is 270 when turning left, which is a positive value,
+            // hence the object does a full clockwise rotation to reach 270 for rotation Y.
+            transform.rotation = Quaternion.Euler(Vector3.Lerp(transform.rotation.eulerAngles, newRotation, rotationSpeed * Time.deltaTime));
+        }
 
-
-        // Can also check this with pure physics by using _myRigidBody.linearVelocity == Vector3.zero
-        if (_myCharacterController.velocity == Vector3.zero)
+        // Can also check this with pure physics by using myRigidBody.linearVelocity == Vector3.zero
+        if (myCharacterController.velocity == Vector3.zero)
         {
             // Not moving...
             isObjectMoving = false;
@@ -112,13 +121,13 @@ public class ObjectController : MonoBehaviour, ICamera
     {
         foreach (var i in iControlSubscribersList)
         {
-            i.IControlUpdate(isObjectMoving, _myTag);
+            i.IControlUpdate(isObjectMoving, myTag);
         }
     }
 
-    public void ICameraUpdate(string cameraAssignedObjectTag)
+    public void ICameraUpdate(string _cameraAssignedObjectTag)
     {
-        if (_myTag == cameraAssignedObjectTag)
+        if (myTag == _cameraAssignedObjectTag)
         {
             SetCameraAssignedValue(true);
         }
