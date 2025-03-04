@@ -6,6 +6,7 @@ public class MainCamera : MonoBehaviour, IControl
 {
     public enum CameraState
     {
+        NoState,
         Object,
         Global
     }
@@ -18,9 +19,10 @@ public class MainCamera : MonoBehaviour, IControl
 
     [Header("MainCamera")]
     [SerializeField] private Vector3 currentPosition, newPosition, targetPosition, currentRotation;
-    [SerializeField] private float cameraMovementSmoothness = 5.0f;
+    private float cameraMovementSmoothness = 5.0f;
     private Vector3 offSetForCameraPos, offSetForCameraRot;
     private Transform myTransform;
+    private CameraState myCameraState;
 
     [Header("ICamera")]
     [SerializeField] private static List<ICamera> iCameraSubscribersList;
@@ -44,6 +46,9 @@ public class MainCamera : MonoBehaviour, IControl
         offSetForCameraRot = new Vector3(25f, 0f, 0f);
         currentPosition = transform.position;
         newPosition = transform.position;
+
+        // Assigning camera state
+        myCameraState = CameraState.NoState;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -69,7 +74,11 @@ public class MainCamera : MonoBehaviour, IControl
         // Dictionary[i] --> Gives the Value of the Key, that is, 'i' in the dictionary.
         // Hence, Dictionary[i].stgoKey is actually Dictionary Value of Key ['i'].stgoKey --> which is the 'string' in the StringTagGameObject struct.
         cameraAssignedObjectTag = intStringTagGameObjectDictionary[0].stgoKey;
+        
+        // Assigning camera state
+        if (cameraAssignedObjectTag != "None") myCameraState = CameraState.Object;
 
+        // Subscribe to IControl
         ObjectController.SubscribeToIControl(this);
     }
 
@@ -85,16 +94,23 @@ public class MainCamera : MonoBehaviour, IControl
     {
 #if UNITY_ANDROID || UNITY_IOS
 #else
-        if(Input.GetKeyDown(KeyCode.I)) // Switch Camera
+        if(!Input.GetKey(KeyCode.R)) // When not rewinding
         {
-            // If camera is assigned to the last ControllableObject in the list, It switches to Global.
-            if (cameraAssignedObjectTag == intStringTagGameObjectDictionary[(intStringTagGameObjectDictionary.Count)-1].stgoKey)
+            if (Input.GetKeyDown(KeyCode.I)) // Switch Camera
             {
-
+                // If camera is assigned to the last ControllableObject in the list, On next switch the camera switches to Global state.
+                if (cameraAssignedObjectTag == intStringTagGameObjectDictionary[(intStringTagGameObjectDictionary.Count) - 1].stgoKey)
+                {
+                    // Changing the camera assigned object tag to "None" as a way to represent the camera is not assigned to any object.
+                    cameraAssignedObjectTag = "None";
+                }
             }
         }
-        
 #endif
+        if(cameraAssignedObjectTag == "None")
+        {
+
+        }
     }
 
     // Updates Camera's position and assigns Camera to target.
@@ -122,11 +138,17 @@ public class MainCamera : MonoBehaviour, IControl
         foreach(var i in iCameraSubscribersList)
         {
             i.ICameraUpdate(cameraAssignedObjectTag);
+            i.ICameraStateUpdate(myCameraState);
         }
     }
 
     public void IControlUpdate(bool _isObjectMoving, string _objectTag)
     {
 
+    }
+
+    public void IControlObjectInfoUpdate(ControllableObjectInfo _cOI)
+    {
+        // Nothing here!
     }
 }

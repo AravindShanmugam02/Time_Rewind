@@ -13,6 +13,7 @@ public class ObjectController : MonoBehaviour, ICamera
     private Transform myTransform;
     private Rigidbody myRigidBody;
     private CharacterController myCharacterController;
+    private ControllableObjectInfo myCOI;
 
     [Header("MainCamera")]
     [SerializeField] private bool isCameraAssigned = false;                                                             //} --> Made these 3 as non-static.
@@ -42,7 +43,10 @@ public class ObjectController : MonoBehaviour, ICamera
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        // Subscribe to ICamera
         MainCamera.SubscribeToICamera(this);
+
+        // Freeze X and Z rot as we won't be using them and also not freezing them would make the obj rotate in those axis unnecessarily.
         myRigidBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
     }
 
@@ -50,6 +54,7 @@ public class ObjectController : MonoBehaviour, ICamera
     void Update()
     {
         MovementUpdate();
+        RecordObjInfo();
         PushInfoToIControlSubscribers();
     }
 
@@ -117,14 +122,65 @@ public class ObjectController : MonoBehaviour, ICamera
         }
     }
 
+    // Since this script is for a prefab, this function records information about only this object.
+    void RecordObjInfo()
+    {
+        myCOI = new ControllableObjectInfo();
+        myCOI.posX = myTransform.position.x;
+        myCOI.posY = myTransform.position.y;
+        myCOI.posZ = myTransform.position.z;
+
+        myCOI.rotX = myTransform.rotation.x;
+        myCOI.rotY = myTransform.rotation.y;
+        myCOI.rotZ = myTransform.rotation.z;
+
+        myCOI.sclX = myTransform.localScale.x;
+        myCOI.sclY = myTransform.localScale.y;
+        myCOI.sclZ = myTransform.localScale.z;
+
+        myCOI.objTag = myTransform.tag;
+
+        myCOI.linearVelocity = myRigidBody.linearVelocity;
+        myCOI.angularVelocity = myRigidBody.angularVelocity;
+
+        myCOI.isMoving = GetIsObjectMovingValue();
+        myCOI.isCameraAssigned = GetIsCameraAssignedValue();
+    }
+
+    void RetrieveObjInfo(ControllableObjectInfo _objInfo)
+    {
+        // We are setting information to the right object by checking the tag. This check is needed because of this script is for a prefab and we get the _objInfo through subscribing to ITimer interface.
+        if(myTag == _objInfo.objTag)
+        {
+            myTransform.position = new Vector3(_objInfo.posX, _objInfo.posY, _objInfo.posZ);
+            myTransform.rotation = Quaternion.Euler(_objInfo.rotX, _objInfo.rotY, _objInfo.rotZ);
+            myTransform.localScale = new Vector3(_objInfo.sclX, _objInfo.sclY, _objInfo.sclZ);
+
+            myRigidBody.linearVelocity = _objInfo.linearVelocity;
+            myRigidBody.angularVelocity = _objInfo.angularVelocity;
+
+            // We don't set tag, as we would be using tag to check whether the values are being set to the right object.
+
+            // Wouldn't need to set isMoving value as it doesn't matter when rewinding.
+
+            SetCameraAssignedValue(_objInfo.isCameraAssigned);
+        }
+    }
+
+    // Pushing the information about this object to subscribers.
     void PushInfoToIControlSubscribers()
     {
         foreach (var i in iControlSubscribersList)
         {
+            // Sending out IsObjectMoving information
             i.IControlUpdate(isObjectMoving, myTag);
+
+            // Sending out this object's majority of information
+            i.IControlObjectInfoUpdate(myCOI);
         }
     }
 
+    // To get update from ICamera about camera assigned object tag
     public void ICameraUpdate(string _cameraAssignedObjectTag)
     {
         if (myTag == _cameraAssignedObjectTag)
@@ -135,5 +191,11 @@ public class ObjectController : MonoBehaviour, ICamera
         {
             SetCameraAssignedValue(false);
         }
+    }
+
+    // To get update from ICamera about the current camera state
+    public void ICameraStateUpdate(MainCamera.CameraState _currentCameraState)
+    {
+        // Nothing here!
     }
 }

@@ -2,79 +2,66 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TimeKeeper : MonoBehaviour
+public class TimeKeeper : MonoBehaviour, IControl, ICamera
 {
-    // Controllable Object Container
-    GameObject COContainer;
-
-    // List for holding child objects of Controllable Object Container
-    List<Transform> listOfChildrenOfControllableObjectContainer;
-
-    // List for holding the controllable objects information
-    List<ControllableObjectInfo> listOfControlllableObjectsInfo;
-
-    // List for holding Frames
-    List<FrameInfo> listOfFramesInfo;
-
-    void SetToObjInfo(ControllableObjectInfo _objInfo, Transform _childObjTrans, Rigidbody _childObjRigBody, ObjectController _childObjCont)
+    public enum RewindState
     {
-        _objInfo.posX = _childObjTrans.position.x;
-        _objInfo.posY = _childObjTrans.position.y;
-        _objInfo.posZ = _childObjTrans.position.z;
-
-        _objInfo.rotX = _childObjTrans.rotation.x;
-        _objInfo.rotY = _childObjTrans.rotation.y;
-        _objInfo.rotZ = _childObjTrans.rotation.z;
-
-        _objInfo.sclX = _childObjTrans.localScale.x;
-        _objInfo.sclY = _childObjTrans.localScale.y;
-        _objInfo.sclZ = _childObjTrans.localScale.z;
-
-        _objInfo.objTag = _childObjTrans.tag;
-
-        _objInfo.linearVelocity = _childObjRigBody.linearVelocity;
-        _objInfo.angularVelocity = _childObjRigBody.angularVelocity;
-
-        _objInfo.isMoving = _childObjCont.GetIsObjectMovingValue();
-        _objInfo.isCameraAssigned = _childObjCont.GetIsCameraAssignedValue();
+        NoState,
+        Object,
+        Global
     }
 
-    void SetFromObjInfo(ControllableObjectInfo _objInfo, Transform _childObjTrans, Rigidbody _childObjRigBody, ObjectController _childObjCont)
+    // Controllable Object Container
+    private GameObject COContainer;
+
+    // List for holding child objects of Controllable Object Container
+    private List<Transform> listOfChildrenOfControllableObjectContainer;
+
+    // List for holding the controllable objects information
+    private List<ControllableObjectInfo> listOfControlllableObjectsInfo;
+
+    // List for holding Frames
+    private List<FrameInfo> listOfFramesInfo;
+
+    // Variable to hold current camera state
+    private MainCamera.CameraState currentCameraState;
+
+    // Variable to hold rewind state
+    private TimeKeeper.RewindState currentRewindState;
+
+    void Awake()
     {
-        _childObjTrans.position = new Vector3(_objInfo.posX, _objInfo.posY, _objInfo.posZ);
-        _childObjTrans.rotation = Quaternion.Euler(_objInfo.rotX, _objInfo.rotY, _objInfo.rotZ);
-        _childObjTrans.localScale = new Vector3(_objInfo.sclX, _objInfo.sclY, _objInfo.sclZ);
+        // Initializing lists
+        listOfChildrenOfControllableObjectContainer = new List<Transform>();
+        listOfControlllableObjectsInfo = new List<ControllableObjectInfo>();
+        listOfFramesInfo = new List<FrameInfo>();
 
-        _childObjRigBody.linearVelocity = _objInfo.linearVelocity;
-        _childObjRigBody.angularVelocity = _objInfo.angularVelocity;
+        // Assigning current camera state
+        currentCameraState = MainCamera.CameraState.NoState;
 
-        // We don't set tag, as we would be using tag to check whether the values are being set to the right object.
-
-        // Wouldn't need to set isMoving value as it doesn't matter when rewinding.
-
-        _childObjCont.SetCameraAssignedValue(_objInfo.isCameraAssigned);
+        // Assigning current rewind state
+        currentRewindState = TimeKeeper.RewindState.NoState;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        listOfChildrenOfControllableObjectContainer = new List<Transform>();
-        listOfControlllableObjectsInfo = new List<ControllableObjectInfo>();
+        // Finding Controllable Objects Container
         COContainer = GameObject.FindGameObjectWithTag("ControllableObjectsContainer");
 
         if(COContainer == null)
         {
             Debug.LogError("GameObject Not Found! - ControllableObjectsContainer");
         }
-        else
+
+        int childrenCount = COContainer.transform.childCount;
+        for(int i = 0; i < childrenCount; i++)
         {
-            int childrenCount = COContainer.transform.childCount;
-            for(int i = 0; i < childrenCount; i++)
-            {
-                // Getting the transforms of all the child controllable Objects.
-                listOfChildrenOfControllableObjectContainer.Add(COContainer.transform.GetChild(i));
-            }
+            // Getting the transforms of all the child controllable Objects.
+            listOfChildrenOfControllableObjectContainer.Add(COContainer.transform.GetChild(i));
         }
+
+        ObjectController.SubscribeToIControl(this);
     }
 
     // Update is called once per frame
@@ -83,11 +70,88 @@ public class TimeKeeper : MonoBehaviour
         // Input Handle
         if(Input.GetKey(KeyCode.R)) // Rewind
         {
-
+            RewindTime();
         }
     }
 
     // Frame Recorder
+    void FrameRecorder()
+    {
+        // If rewinding globally, stop recording frames
+        if (currentRewindState != RewindState.Global)
+        {
+            // Checking if the list of conrtrollable object info has the same number of entries as the list of all the child objects of controllable object container.
+            if (listOfControlllableObjectsInfo.Count == listOfChildrenOfControllableObjectContainer.Count)
+            {
+                // Create a new FrameInfo object.
+                FrameInfo fI = new FrameInfo();
+
+                // Assign the list of controllable object info to fI object's list.
+                fI.ControllableObjectsInfoList = listOfControlllableObjectsInfo;
+
+                // Clearing the list of controllable object info. Because when the IControl observer functions give values of ControllableObjectInfo, we got to add them to this list.
+                listOfControlllableObjectsInfo.Clear();
+
+                // Add the fI object to the list of frame info.
+                listOfFramesInfo.Add(fI);
+            }
+        }
+    }
 
     // Rewind Time
+    void RewindTime()
+    {
+        if(currentCameraState == MainCamera.CameraState.Global)
+        {
+            // Setting rewind state variable value to global
+            currentRewindState = RewindState.Global;
+        }
+
+        // Time Manipulation
+        ManipulateTime();
+    }
+
+    void ManipulateTime()
+    {
+        // Global Time
+        if(currentRewindState == RewindState.Global)
+        {
+            FrameInfo fI = listOfFramesInfo[listOfFramesInfo.Count - 1];
+            List<ControllableObjectInfo> loCOI = fI.ControllableObjectsInfoList;
+        }
+
+        // Local Time
+        if(currentRewindState == RewindState.Object)
+        {
+
+        }
+    }
+
+    public void IControlUpdate(bool _isObjectMoving, string _objectTag)
+    {
+        // Nothing here!
+    }
+
+    public void IControlObjectInfoUpdate(ControllableObjectInfo _cOI)
+    {
+        if(!listOfControlllableObjectsInfo.Contains(_cOI))
+        {
+            // WARNING: Not sure which of the copies of prefab in the scene would send this update in which order.
+            listOfControlllableObjectsInfo.Add(_cOI);
+        }
+
+        FrameRecorder();
+    }
+
+    // To get update from ICamera about camera assigned object tag
+    public void ICameraUpdate(string _cameraAssignedObjectTag)
+    {
+
+    }
+
+    // To get update from ICamera about the current camera state
+    public void ICameraStateUpdate(MainCamera.CameraState _currentCameraState)
+    {
+        currentCameraState = _currentCameraState;
+    }
 }

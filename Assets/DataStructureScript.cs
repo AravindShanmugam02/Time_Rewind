@@ -4,6 +4,10 @@ using UnityEngine;
 
 public struct ControllableObjectInfo
 {
+    public string objTag;
+    public bool isCameraAssigned;
+    public bool isMoving;
+
     public float posX;
     public float posY;
     public float posZ;
@@ -18,10 +22,13 @@ public struct ControllableObjectInfo
 
     public Vector3 linearVelocity;
     public Vector3 angularVelocity;
+}
 
+public struct ControllableObjectTimeGapInfo
+{
     public string objTag;
-    public bool isCameraAssigned;
-    public bool isMoving;
+    public int timeGapStartFrame;
+    public int timeGapStopFrame;
 }
 
 public struct FrameInfo
@@ -31,6 +38,6 @@ public struct FrameInfo
 
 public struct StringTagGameObject
 {
-    public string stgoKey;  // Removed type 'TagHandle' and used 'string' instead for game object tags.
+    public string stgoKey;  // Removed type 'TagHandle' and used 'string' instead for storing game object tags.
     public GameObject stgoValue;
 }
