@@ -314,13 +314,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.2164396, y: 0, z: 0, w: 0.97629607}
-  m_LocalPosition: {x: 0, y: 7, z: -10}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 25, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -377,14 +377,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e066efd705685ed4c8fe97e469d055f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  controllableObject00: {fileID: 738971895}
-  controllableObject01: {fileID: 1862792216}
+  controllableObjectsContainer: {fileID: 0}
   cameraAssignedObjectTag: 
-  _currentPosition: {x: 0, y: 0, z: 0}
-  _newPosition: {x: 0, y: 0, z: 0}
-  _targetPosition: {x: 0, y: 0, z: 0}
-  _currentRotation: {x: 0, y: 0, z: 0}
-  _cameraMovementSmoothness: 0
+  cameraGlobalPosition: {fileID: 809807252}
+  currentPosition: {x: 0, y: 0, z: 0}
+  newPosition: {x: 0, y: 0, z: 0}
+  targetPosition: {x: 0, y: 0, z: 0}
+  currentRotation: {x: 0, y: 0, z: 0}
+  offSetForCameraPos: {x: 0, y: 0, z: 0}
+  offSetForCameraRot: {x: 0, y: 0, z: 0}
+  myCameraState: 0
 --- !u!1 &334185206
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,16 +541,42 @@ MonoBehaviour:
   m_LightCookieSize: {x: 1, y: 1}
   m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 1
---- !u!1 &738971895 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1835179034694245570, guid: 7432b48c83d517d4f8bf7b97b58b9eae, type: 3}
-  m_PrefabInstance: {fileID: 1730537894}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &738971902 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3229426255373209534, guid: 7432b48c83d517d4f8bf7b97b58b9eae, type: 3}
   m_PrefabInstance: {fileID: 1730537894}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &809807252
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 809807253}
+  m_Layer: 0
+  m_Name: CameraGlobalPosition
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &809807253
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 809807252}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.07402671, y: 0.9174181, z: -0.20338671, w: 0.33391294}
+  m_LocalPosition: {x: -9, y: 14, z: 22}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 25, y: 140, z: 0}
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -668,8 +696,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1791699347}
+  - component: {fileID: 1791699348}
   m_Layer: 0
-  m_Name: Timer
+  m_Name: TimeKeeper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -690,11 +719,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1862792216 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1835179034694245570, guid: 7432b48c83d517d4f8bf7b97b58b9eae, type: 3}
-  m_PrefabInstance: {fileID: 2095874817}
+--- !u!114 &1791699348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791699346}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a567e986d927cb4b9e4830875d779c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  COContainer: {fileID: 0}
+  listOfChildrenOfControllableObjectContainer: []
+  currentCameraState: 0
+  currentRewindState: 0
+  currentCameraAssignedObjectTag: 
 --- !u!4 &1862792223 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3229426255373209534, guid: 7432b48c83d517d4f8bf7b97b58b9eae, type: 3}
@@ -771,6 +812,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 1791699347}
   - {fileID: 330585546}
+  - {fileID: 809807253}
   - {fileID: 410087041}
   - {fileID: 832575519}
   - {fileID: 62814080}

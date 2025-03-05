@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ObjectController : MonoBehaviour, ICamera
+public class ObjectController : MonoBehaviour, ICamera, ITimer
 {
     [Header("Objects")]
     [SerializeField] private float movementSpeed = 5.0f, rotationSpeed = 5.0f;
@@ -9,11 +9,13 @@ public class ObjectController : MonoBehaviour, ICamera
     [SerializeField] private Vector3 movementDirectionInput, directionOfMovement, movementVelocityOrMotion, newRotation;
     [SerializeField] private string myTag; // Removed type 'TagHandle' and used 'string' instead.
     [SerializeField] private bool isObjectMoving = false;
-    public bool GetIsObjectMovingValue() { return isObjectMoving; } // Created this function, so that TimeKeeper can use it to access 'isObjectMoving' value on adhoc to set this value every frame.
     private Transform myTransform;
     private Rigidbody myRigidBody;
     private CharacterController myCharacterController;
     private ControllableObjectInfo myCOI;
+
+    public bool GetIsObjectMovingValue() { return isObjectMoving; } // Created this function, so that TimeKeeper can use it to access 'isObjectMoving' value on adhoc to set this value every frame.
+    public string GetObjectTag() { return myTag; }
 
     [Header("MainCamera")]
     [SerializeField] private bool isCameraAssigned = false;                                                             //} --> Made these 3 as non-static.
@@ -43,11 +45,14 @@ public class ObjectController : MonoBehaviour, ICamera
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        // Freeze X and Z rot as we won't be using them and also not freezing them would make the obj rotate in those axis unnecessarily.
+        myRigidBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
         // Subscribe to ICamera
         MainCamera.SubscribeToICamera(this);
 
-        // Freeze X and Z rot as we won't be using them and also not freezing them would make the obj rotate in those axis unnecessarily.
-        myRigidBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        // Subscribe to ITimer
+        TimeKeeper.SubscribeToITimer(this);
     }
 
     // Update is called once per frame
@@ -55,7 +60,6 @@ public class ObjectController : MonoBehaviour, ICamera
     {
         MovementUpdate();
         RecordObjInfo();
-        PushInfoToIControlSubscribers();
     }
 
     void MovementUpdate()
@@ -145,30 +149,33 @@ public class ObjectController : MonoBehaviour, ICamera
 
         myCOI.isMoving = GetIsObjectMovingValue();
         myCOI.isCameraAssigned = GetIsCameraAssignedValue();
+
+        SendMyCOIToIControlSubscribers();
     }
 
-    void RetrieveObjInfo(ControllableObjectInfo _objInfo)
+    void RetrieveObjInfo(ControllableObjectInfo _cOI)
     {
-        // We are setting information to the right object by checking the tag. This check is needed because of this script is for a prefab and we get the _objInfo through subscribing to ITimer interface.
-        if(myTag == _objInfo.objTag)
+        // We are setting information to the right object by checking the tag. This check is needed because of this script is for a controllable object prefab and we get the _cOI through subscribing to ITimer interface.
+        // But it is already checked and sent from TimeKeeper class.
+        if(myTag == _cOI.objTag)
         {
-            myTransform.position = new Vector3(_objInfo.posX, _objInfo.posY, _objInfo.posZ);
-            myTransform.rotation = Quaternion.Euler(_objInfo.rotX, _objInfo.rotY, _objInfo.rotZ);
-            myTransform.localScale = new Vector3(_objInfo.sclX, _objInfo.sclY, _objInfo.sclZ);
+            myTransform.position = new Vector3(_cOI.posX, _cOI.posY, _cOI.posZ);
+            myTransform.rotation = Quaternion.Euler(_cOI.rotX, _cOI.rotY, _cOI.rotZ);
+            myTransform.localScale = new Vector3(_cOI.sclX, _cOI.sclY, _cOI.sclZ);
 
-            myRigidBody.linearVelocity = _objInfo.linearVelocity;
-            myRigidBody.angularVelocity = _objInfo.angularVelocity;
+            myRigidBody.linearVelocity = _cOI.linearVelocity;
+            myRigidBody.angularVelocity = _cOI.angularVelocity;
 
             // We don't set tag, as we would be using tag to check whether the values are being set to the right object.
 
             // Wouldn't need to set isMoving value as it doesn't matter when rewinding.
 
-            SetCameraAssignedValue(_objInfo.isCameraAssigned);
+            SetCameraAssignedValue(_cOI.isCameraAssigned);
         }
     }
 
-    // Pushing the information about this object to subscribers.
-    void PushInfoToIControlSubscribers()
+    // Pushing the information about this controllable object prefab to subscribers.
+    void SendMyCOIToIControlSubscribers()
     {
         foreach (var i in iControlSubscribersList)
         {
@@ -197,5 +204,15 @@ public class ObjectController : MonoBehaviour, ICamera
     public void ICameraStateUpdate(MainCamera.CameraState _currentCameraState)
     {
         // Nothing here!
+    }
+
+    public void ITimerRewindingUpdate(TimeKeeper.RewindState _rewindState)
+    {
+
+    }
+
+    public void ITimerContObjInfoUpdate(ControllableObjectInfo _cOI)
+    {
+        RetrieveObjInfo(_cOI);
     }
 }
