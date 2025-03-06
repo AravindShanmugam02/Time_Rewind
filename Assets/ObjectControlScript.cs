@@ -9,7 +9,6 @@ public class ObjectController : MonoBehaviour, ICamera, ITimer
     [SerializeField] private Vector3 movementDirectionInput, directionOfMovement, movementVelocityOrMotion, newRotation;
     [SerializeField] private string myTag; // Removed type 'TagHandle' and used 'string' instead.
     [SerializeField] private bool isObjectMoving = false;
-    private Transform myTransform;
     private Rigidbody myRigidBody;
     private CharacterController myCharacterController;
     private ControllableObjectInfo myCOI;
@@ -36,10 +35,9 @@ public class ObjectController : MonoBehaviour, ICamera, ITimer
         iControlSubscribersList = new List<IControl>();
 
         // Get components
-        myTransform = GetComponent<Transform>();
         myRigidBody = GetComponent<Rigidbody>();
         myCharacterController = GetComponent<CharacterController>();
-        myTag = myTransform.tag;
+        myTag = transform.tag;
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -130,19 +128,19 @@ public class ObjectController : MonoBehaviour, ICamera, ITimer
     void RecordObjInfo()
     {
         myCOI = new ControllableObjectInfo();
-        myCOI.posX = myTransform.position.x;
-        myCOI.posY = myTransform.position.y;
-        myCOI.posZ = myTransform.position.z;
+        myCOI.posX = transform.position.x;
+        myCOI.posY = transform.position.y;
+        myCOI.posZ = transform.position.z;
 
-        myCOI.rotX = myTransform.rotation.x;
-        myCOI.rotY = myTransform.rotation.y;
-        myCOI.rotZ = myTransform.rotation.z;
+        myCOI.rotX = transform.rotation.x;
+        myCOI.rotY = transform.rotation.y;
+        myCOI.rotZ = transform.rotation.z;
 
-        myCOI.sclX = myTransform.localScale.x;
-        myCOI.sclY = myTransform.localScale.y;
-        myCOI.sclZ = myTransform.localScale.z;
+        myCOI.sclX = transform.localScale.x;
+        myCOI.sclY = transform.localScale.y;
+        myCOI.sclZ = transform.localScale.z;
 
-        myCOI.objTag = myTransform.tag;
+        myCOI.objTag = transform.tag;
 
         myCOI.linearVelocity = myRigidBody.linearVelocity;
         myCOI.angularVelocity = myRigidBody.angularVelocity;
@@ -159,9 +157,9 @@ public class ObjectController : MonoBehaviour, ICamera, ITimer
         // But it is already checked and sent from TimeKeeper class.
         if(myTag == _cOI.objTag)
         {
-            myTransform.position = new Vector3(_cOI.posX, _cOI.posY, _cOI.posZ);
-            myTransform.rotation = Quaternion.Euler(_cOI.rotX, _cOI.rotY, _cOI.rotZ);
-            myTransform.localScale = new Vector3(_cOI.sclX, _cOI.sclY, _cOI.sclZ);
+            transform.position = new Vector3(_cOI.posX, _cOI.posY, _cOI.posZ);
+            transform.eulerAngles = new Vector3(_cOI.rotX, _cOI.rotY, _cOI.rotZ); // transform.rotation doesn't seem to set the rotation in MainCamera script, hence trying transform.eulerAngles.
+            transform.localScale = new Vector3(_cOI.sclX, _cOI.sclY, _cOI.sclZ);
 
             myRigidBody.linearVelocity = _cOI.linearVelocity;
             myRigidBody.angularVelocity = _cOI.angularVelocity;

@@ -199,7 +199,7 @@ public class TimeKeeper : MonoBehaviour, IControl, ICamera
                     // Checking if IEnumerable is empty or null
                     if (cOIIEnumerable == null || !cOIIEnumerable.Any())
                     {
-                        Debug.LogError("cOIEnumerable is empty in ManipulateTime() in TimeKeeper class!");
+                        Debug.LogAssertion((cOIIEnumerable.GetType()).ToString() + " cOIEnumerable is empty or null in ManipulateTime() in TimeKeeper class!");
                     }
 
                     // In order to get the actual ControllableObjectInfo object from the IEnumerable<T> result, we got to iterate through it using foreach or any suitable iterator.
