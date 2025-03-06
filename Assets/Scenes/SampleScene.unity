@@ -590,6 +590,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cc3af27d280a8f47a4f49259dca1f4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cameraGlobalFocusPointTransform: {fileID: 0}
+  smoothness: 5
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -669,6 +671,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   controllableObjectsList: []
+  smoothness: 5
 --- !u!4 &1539670580
 Transform:
   m_ObjectHideFlags: 0

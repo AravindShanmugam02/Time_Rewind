@@ -20,7 +20,7 @@ public class MainCamera : MonoBehaviour, IControl
     [Header("MainCamera")]
     [SerializeField] private GameObject cameraGlobalPosition;
     [SerializeField] private Vector3 currentPosition, newPosition, targetPosition, currentRotation;
-    [SerializeField] private Vector3 offSetForCameraPos, offSetForCameraRot;
+    [SerializeField] private Vector3 offSetForCameraRot;
     [SerializeField] private CameraState myCameraState;
     private float cameraMovementSmoothness = 5.0f;
     private Transform myTransform;
@@ -44,8 +44,6 @@ public class MainCamera : MonoBehaviour, IControl
         gameObjectTagGameObjectDictionary = new Dictionary<string, GameObject>();
 
         // Assigning value for variables
-        offSetForCameraPos = new Vector3(0f, 7f, -10); // Hard value just got by trail & error in the editor.
-        offSetForCameraRot = new Vector3(25f, 0f, 0f);
         currentPosition = transform.position;
         newPosition = transform.position;
 
@@ -159,7 +157,7 @@ public class MainCamera : MonoBehaviour, IControl
             offSetForCameraRot = cameraGlobalPosition.transform.rotation.eulerAngles;
         }
 
-        newPosition = targetPosition + offSetForCameraPos;
+        newPosition = targetPosition;
         currentPosition = transform.position;
         currentRotation = transform.rotation.eulerAngles;
         transform.position = Vector3.Lerp(currentPosition, newPosition, 0.5f);

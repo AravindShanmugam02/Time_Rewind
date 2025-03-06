@@ -20,10 +20,8 @@ public class CameraGlobalPosition : MonoBehaviour
         transform.position = Vector3.Lerp(transform.position, cameraGlobalFocusPointTransform.position + new Vector3(0f, 20f, 20f), smoothness * Time.deltaTime);
 
         // Now, camera global position object's rotation need to look at camera global focus point object's position
-
         // Creating the direction towards which the camera has to look, that is, the look direction
         Vector3 lookDirection = (cameraGlobalFocusPointTransform.position - transform.position).normalized; // Can also use --> Vector3.Normalize((cameraGlobalFocusPointTransform.position - transform.position))
-
         // Now that I got the look direction, making a look rotation. Also making it lerp from current rotation to LookRotation with lerping smoothness * dt to make it smooth overtime
         transform.eulerAngles = Vector3.Lerp(transform.rotation.eulerAngles, Quaternion.LookRotation(lookDirection, Vector3.up).eulerAngles, smoothness * Time.deltaTime);
     }
